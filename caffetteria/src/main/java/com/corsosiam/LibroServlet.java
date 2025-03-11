@@ -1,15 +1,9 @@
 package com.corsosiam;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.Document;
 
 import com.corsosiam.entities.Libro;
-import com.corsosiam.services.MongoDBConnector;
-import com.google.gson.Gson;
-import com.mongodb.client.MongoCollection;
+import com.corsosiam.services.LibroBI;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -17,41 +11,34 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class LibroServlet extends HttpServlet {
-    
-    // CACHE
-    public List<Libro> libri;
-  
-    public List<Libro> loadLibri(){
-        libri = new ArrayList<Libro>();
-        //     libri.add(new Libro("Il signore degli anelli","Tolkien","12345"));
-        //     libri.add(new Libro("Il signore degli anelli","Tolkien","12345"));
-        //     libri.add(new Libro("Il signore degli anelli","Tolkien","12345"));
-        // }
-            MongoDBConnector mongodb = new MongoDBConnector();
-            mongodb.setConnection();
-            mongodb.setDatabase("caffetteria");
-            MongoCollection<Document> documents = mongodb.load("libri");
-            for(Document doc : documents.find()){
-                    Gson gson = new Gson();
-                    Libro libro = gson.fromJson(doc.toJson(), Libro.class);
-                    libri.add(libro);
-                }
-        
-        return libri;
-    }
+
+    LibroBI libreria = new LibroBI();
     // Il metodo doGet si aspetta di ricevere la richiesta di visualizzare l'elenco intero dei libri
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException{
         // uso il metodo per caricare la lista dei libri, se è già stata caricata una volta non la ricaricherà
         // ma mi restituirà direttamente la lista dei libri
-        loadLibri();
+        // List libri = libreria.loadLibri();
 
         // preparo già la Request fornendo l'attributo libri con l'elenco dei libri
-        request.setAttribute("libri", libri);
+        request.setAttribute("libri", libreria.loadLibri());
 
         // SEGNALO CHE LA REQUEST VIENE GESTITA DIRETTAMENTE DALLA JSP -> libri.jsp
         // E RICEVERA' LEI REQUEST E INVIERA' LA RESPONSE
         request.getRequestDispatcher("/libri.jsp").forward(request, resp);
 
 
+    }
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        String titolo = request.getParameter("titolo");
+        String autore = request.getParameter("autore");
+        String isbn = request.getParameter("isbn");
+        Libro nuovoLibro = new Libro();
+        nuovoLibro.setTitolo(titolo);
+        nuovoLibro.setAutore(autore);
+        nuovoLibro.setIsbn(isbn);
+        libreria.save(nuovoLibro);
+        response.sendRedirect("/caffetteria/libri");
     }
 }
