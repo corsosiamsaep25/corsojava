@@ -39,6 +39,7 @@ public class LibroServlet extends HttpServlet {
         nuovoLibro.setAutore(autore);
         nuovoLibro.setIsbn(isbn);
         libreria.save(nuovoLibro);
-        response.sendRedirect("/caffetteria/libri");
+        libreria.resetCache();
+        response.sendRedirect("libri");
     }
 }
